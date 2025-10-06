@@ -1,4 +1,4 @@
-import { Ollama } from "@llamaindex/ollama";
+import "dotenv/config";
 
 export const systemPrompt = `
     Sos un asistente encargado de realizar búsquedas de información sobre hechos de la categoría que elija el usuario. Tu tarea es ayudar a encontrar datos generales, sorprendentes, curiosos o poco conocidos relacionados con la categoría seleccionada.
@@ -12,9 +12,9 @@ export const systemPrompt = `
     Respondé siempre de manera clara, breve y respetando el idioma que usa el usuario.
 `.trim();
 
-export const ollamaLLM = new Ollama({
-    model: "qwen3:4b",
-    temperature: 0.75,
-    timeout: 2 * 60 * 1000, // Timeout de 2 minutos
-});
-
+export const LLMConfig = {
+  provider: process.env.LLM_PROVIDER || "",
+  model: process.env.LLM_MODEL || "",
+  temperature: parseFloat(process.env.LLM_TEMPERATURE) || 0.75,
+  timeout: parseInt(process.env.LLM_TIMEOUT) || 120000, // Timeout de 2 minutos
+};
