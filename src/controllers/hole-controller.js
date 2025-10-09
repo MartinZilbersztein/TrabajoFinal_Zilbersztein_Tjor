@@ -1,61 +1,27 @@
-import { Router } from "express";
 import HoleService from "../services/hole-service.js";
 
-const router = Router();
 const holeService = new HoleService();
 
-router.post("/", async (req, res) => {
-  const sessionId = req.sessionId;
-  const { categoryId } = req.body;
-
-  const hole = await holeService.createHole(sessionId, categoryId);
-  res.json(hole);
-});
-
-router.get("/:id", async (req, res) => {
-  const sessionId = req.sessionId;
-  const { id } = req.params;
-
-  const hole = await holeService.getHoleAsync(sessionId, id);
-  res.json(hole);
-});
-
-router.post("/generate/:id", async (req, res) => {
-  const sessionId = req.sessionId;
-  const { id } = req.params;
-  const { message } = req.body;
-
-  if (!message || message.trim() === "") {
-    return res.status(400).send("El mensaje no puede estar vacío");
-  }
-
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders();
-
+export const sendMessage = async (req, res) => {
   try {
-    const [accumulatedDelta, stream] = holeService.generateAsync(
-      sessionId,
-      id,
-      message,
-    );
+    const { message, categoryId } = req.body;
 
-    res.write(`data: ${accumulatedDelta}\n\n`);
+    if (!message) return res.status(400).json({ error: "Falta message" });
 
-    for await (const chunk of stream) res.write(`data: ${chunk}\n\n`);
-  } catch (error) {
-    console.error("Error al generar el agujero:", error);
-    res.status(500).send("Error al generar el agujero");
-  } finally {
-    res.write("data: [DONE]\n\n");
-    res.end();
+    // Crear hole automáticamente si no existe
+    let hole = holeService.holes[0]; // asumimos un solo hole
+    if (!hole) {
+      if (!categoryId) return res.status(400).json({ error: "Falta categoryId" });
+      hole = await holeService.createHoleAsync(categoryId);
+      console.log("✅ Hole creado automáticamente:", hole);
+    }
+
+    // Enviar mensaje y obtener respuesta
+    const response = await holeService.sendMessageAsync(hole.id, message);
+    return res.json(response);
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
-});
-
-router.get("/categories", async (req, res) => {
-  const categories = await holeService.getCategoriesAsync();
-  res.json(categories);
-});
-
-export default router;
+};

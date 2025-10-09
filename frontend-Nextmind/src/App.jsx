@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FiSend } from "react-icons/fi";
 import "../src/App.css";
 
 export default function App() {
-  // Mensaje inicial del bot
-  const [categories, setCategories] = useState([]);
+  const [holeId, setHoleId] = useState(null);
   const [messages, setMessages] = useState([
     { role: "bot", text: "¡Hola! Soy tu ChatBot. ¿En qué puedo ayudarte hoy?" }
   ]);
@@ -13,75 +12,61 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(()=>{
-    const fetchCategories = async () => {
-      const response = await fetch("http://localhost:3000/hole/categories");
-      const newCategories = await response.json();
-      setCategories(newCategories);
-    }
+  // Crear un chat automáticamente
+  useEffect(() => {
+    const createHole = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/holes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ categoryId: 1 }),
+        });
+        const data = await response.json();
+        setHoleId(data.id);
+      } catch (err) {
+        console.error("Error al crear el chat:", err);
+      }
+    };
 
-    fetchCategories();
+    createHole();
   }, []);
 
-  // Autoscroll al final
+  // Autoscroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+ const sendMessage = async () => {
+  if (!input.trim()) return;
 
-    const userMessage = { role: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
+  const userMessage = { role: "user", text: input };
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
+  setLoading(true);
 
-    try {
-      const response = await fetch("http://localhost:3000/hole/generate/123", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
-      });
+  try {
+    const response = await fetch(`http://localhost:3000/holes/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage.text, categoryId: 1 }),
+    });
 
-      if (!response.ok) throw new Error("Error en la respuesta del servidor");
+    if (!response.ok) throw new Error("Error en la respuesta del servidor");
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let accumulated = "";
-
-      // Añadimos un mensaje vacío del bot para ir completando
-      setMessages((prev) => [...prev, { role: "bot", text: "" }]);
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk
-          .split("\n")
-          .filter((line) => line.startsWith("data:"))
-          .map((line) => line.replace(/^data:\s*/, ""));
-
-        for (const line of lines) {
-          if (line === "[DONE]") break;
-          accumulated += line;
-          setMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1].text = accumulated;
-            return updated;
-          });
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "❌ Error al obtener respuesta." },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const data = await response.json();
+    const botMessage = { role: "bot", text: data.message };
+    setMessages((prev) => [...prev, botMessage]);
+  } catch (error) {
+    console.error(error);
+    setMessages((prev) => [
+      ...prev,
+      { role: "bot", text: "❌ Error al obtener respuesta." },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
+ 
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -107,6 +92,18 @@ export default function App() {
               {m.text}
             </motion.div>
           ))}
+
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="chat-bubble bot"
+            >
+              Generando respuesta...
+            </motion.div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -119,10 +116,11 @@ export default function App() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           rows={1}
+          disabled={loading} // Solo deshabilitamos mientras llega la respuesta
         />
         <button
           onClick={sendMessage}
-          disabled={loading}
+          disabled={loading} // Igual aquí
           className={`chat-send ${loading ? "loading" : ""}`}
         >
           <FiSend size={22} />

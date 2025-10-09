@@ -1,4 +1,4 @@
-import * as userService from "../services/user-service.js";
+/*import * as userService from "../services/user-service.js";
 
 export default async function sessionMiddleware(req, res, next) {
   const sessionId = req.cookies.sessionId;
@@ -15,3 +15,4 @@ export default async function sessionMiddleware(req, res, next) {
   req.sessionId = sessionId;
   next();
 }
+*/

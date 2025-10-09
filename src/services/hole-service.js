@@ -1,70 +1,46 @@
-import { agent, agentStreamEvent } from "@llamaindex/workflow";
-import { systemPrompt } from "../config/llm-config.js";
-import { initializeLLM } from "../utils/llm.js";
-import * as holeRepository from "../repositories/hole-repository.js";
+import { generateWithOllama } from "../utils/ollama.js";
 
-const llm = await initializeLLM();
-
-const holeAgent = agent({
-  llm,
-  verbose: true,
-  systemPrompt,
-});
-const streams = new Map();
-const accumulatedDeltas = new Map();
-
-export const createHoleAsync = async (sessionId, categoryId) => {
-  return holeRepository.createHoleAsync(sessionId, categoryId);
-};
-
-export const getHoleAsync = async (sessionId, id) => {
-  return holeRepository.getHoleAsync(sessionId, id);
-};
-
-export const generateAsync = async (sessionId, id, message) => {
-  const hole = await getHoleAsync(sessionId, id);
-
-  if (hole === null) return null;
-
-  if (!accumulatedDeltas.has(id)) {
-    accumulatedDeltas.set(id, "");
-    const stream = runAgentAsync(message, hole.messages);
-    processInferedTextAsync(id, stream);
+export default class HoleService {
+  constructor() {
+    this.holes = [];
+    this.nextId = 1;
   }
 
-  return [accumulatedDeltas.get(id) ?? null, streams.get(id)];
-};
+  async createHoleAsync(categoryId) {
+    const hole = { id: this.nextId++, categoryId, messages: [] };
+    this.holes.push(hole);
+    return hole;
+  }
 
-const runAgentAsync = async (message, messages) => {
-  const stream = holeAgent.runStream(message, {
-    chatHistory: [{ role: "system", content: systemPrompt }, ...messages],
-  });
-  return stream;
-};
+  async getHoleAsync(id) {
+    return this.holes.find(h => h.id === id) || null;
+  }
 
-const processInferedTextAsync = async (id, stream) => {
-  streams.set(id, stream);
+  async sendMessageAsync(id, message) {
+    const hole = await this.getHoleAsync(id);
+    if (!hole) return { error: "Hole no encontrado" };
 
-  for await (const chunk of stream) {
-    if (agentStreamEvent.include(chunk)) {
-      accumulatedDeltas.set(id, accumulatedDeltas.get(id) + chunk.delta);
+    // 🔹 Guardamos el mensaje del usuario
+    hole.messages.push({ role: "user", content: message });
+    console.log("🔹 Generando respuesta con Ollama para:", message);
+
+    try {
+      // 🔹 Creamos prompt con todo el historial
+const prompt = hole.messages
+  .map(m => (m.role === "user" ? `Usuario: ${m.content}` : m.content))
+  .join("\n");
+      const botMessage = await generateWithOllama(prompt);
+
+      // 🔹 Guardamos la respuesta del bot
+      hole.messages.push({ role: "bot", content: botMessage });
+      console.log("✅ Respuesta generada:", botMessage);
+
+      return { message: botMessage };
+    } catch (err) {
+      console.error("❌ Error generando respuesta con Ollama:", err);
+      const botMessage = "❌ Error al generar respuesta";
+      hole.messages.push({ role: "bot", content: botMessage });
+      return { message: botMessage };
     }
   }
-
-  await updateMessagesAsync(id);
-  accumulatedDeltas.delete(id);
-  streams.delete(id);
-};
-
-const updateMessagesAsync = async (id) => {
-  const newMessages = [
-    ...hole.messages,
-    { role: "user", content: message },
-    { role: "assistant", content: accumulatedDeltas.get(id) },
-  ];
-  holeRepository.updateMessagesAsync(id, newMessages);
-};
-
-export const getCategoriesAsync = async () => {
-  return holeRepository.getCategoriesAsync();
-};
+}
