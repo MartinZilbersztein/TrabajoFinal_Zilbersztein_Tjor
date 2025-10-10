@@ -1,46 +1,34 @@
-// src/repositories/hole-repository.js
-let holes = [];
-let categories = [
-  { id: 1, name: "Ciencia" },
-  { id: 2, name: "Historia" },
-  { id: 3, name: "Tecnología" }
-];
+import { Pool } from "pg";
+import DBConfig from "../config/db-config.js";
 
-export const createHoleAsync = async (sessionId, categoryId) => {
-  const hole = { id: holes.length + 1, categoryId, messages: [] };
-  holes.push(hole);
-  return hole;
-};
+const pool = new Pool(DBConfig);
 
-export const getHoleAsync = async (sessionId, id) => {
-  return holes.find(h => h.id === parseInt(id));
-};
+export default class HoleRepository {
+  async getCategoriesAsync() {
+    const sql = "SELECT * FROM categories";
+    const result = await pool.query(sql);
+    return result.rows;
+  };
 
-export const updateMessagesAsync = async (id, messages) => {
-  const hole = holes.find(h => h.id === parseInt(id));
-  if (hole) hole.messages = messages;
-};
+  async createHoleAsync(sessionId) {
+    const sql =
+      "INSERT INTO holes (session_id) VALUES ($1) RETURNING id";
+    const values = [sessionId];
+    const result = await pool.query(sql, values);
+    return result.rows[0];
+  };
 
-export const getCategoriesAsync = async () => categories;
+  async getHoleAsync(sessionId, id) {
+    const sql = "SELECT * FROM holes WHERE id = $1";
+    const values = [sessionId, id];
+    const result = await pool.query(sql, values);
+    return result.rows.length > 0 ? result.rows[0] : null;
+  };
 
+  async updateMessagesAsync(id, messages) {
+    const sql = "UPDATE holes SET messages = $2 WHERE id = $1";
+    const values = [id, messages];
+    await pool.query(sql, values);
+  };
+}
 
-/* --------------------------------------------
-   Código original para PostgreSQL (comentado)
--------------------------------------------- */
-// import pool from "../config/db.js";
-
-// export const createHoleAsync = async (sessionId, categoryId) => {
-//   // DB logic aquí
-// };
-
-// export const getHoleAsync = async (sessionId, id) => {
-//   // DB logic aquí
-// };
-
-// export const updateMessagesAsync = async (id, messages) => {
-//   // DB logic aquí
-// };
-
-// export const getCategoriesAsync = async () => {
-//   // DB logic aquí
-// };

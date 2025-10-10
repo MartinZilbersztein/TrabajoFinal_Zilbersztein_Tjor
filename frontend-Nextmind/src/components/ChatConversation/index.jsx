@@ -1,14 +1,25 @@
 import { useContext } from "react";
 import { motion } from "motion/react";
 import { HoleContext } from "../../contexts/HoleContext";
-import "./ChatWindow.css";
+import CategoryButtons from "../UI/CategoryButtons";
+import "./ChatConversation.css";
 
-export default function ChatWindow({ messagesEndRef }) {
+export default function ChatConversation({ messagesEndRef }) {
   const { messages, loading } = useContext(HoleContext);
-
+  
   return (
-  <div className="chat-window">
+  <div className="chat-conversation">
     <div className="chat-body">
+      <motion.div 
+        key={0}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="chat-bubble bot"
+      >
+        {`¡Hola! Empecemos a investigar. Elegí una categoría para empezar:`}
+        <CategoryButtons />
+      </motion.div>
       {messages.map((m, i) => (
         <motion.div
           key={i}

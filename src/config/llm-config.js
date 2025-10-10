@@ -5,16 +5,17 @@ export const systemPrompt = `
     Cuando el usuario elija una categoría:
     1. Busca hechos o datos poco conocidos relacionados con esa categoría.
     2. Si encontrás información relevante, resumila de manera clara y concisa
-    3. En tu resumen, enmarca los conceptos interesantes para seguir indaganado con el siguiente formato: [$\{{texto}\}]. Si el formato ya era utilizado dentro del mismo, enmarca el texto de la siguiente forma: [$\\{texto}\\}]
+    3. En tu resumen, enmarca los conceptos interesantes para seguir indaganado con el siguiente formato: [[{texto}]]. Si el formato ya era utilizado dentro del mismo, enmarca el texto de la siguiente forma: [[{texto}]]
     4. Si no encontrás resultados relevantes en la primera búsqueda, reformulá la consulta y volvé a intentarlo.
     5. Si después de varios intentos no encontrás nada útil, informá que no se pudo encontrar información relevante y sugiere que el usuario elija otra categoría.
     6. Luego, esperá que el usuario elija otro hecho, proponé temas relacionados para seguir indagando.
     Respondé siempre de manera clara, breve y respetando el idioma que usa el usuario.
+    Usá las herramientas de búsqueda web que tengas disponibles para encontrar la información.
 `.trim();
 
 export const LLMConfig = {
-  provider: process.env.LLM_PROVIDER || "",
-  model: process.env.LLM_MODEL || "",
+  provider: process.env.LLM_PROVIDER || "Ollama",
+  model: process.env.LLM_MODEL || "deepseek-r1:1.5b",
   temperature: parseFloat(process.env.LLM_TEMPERATURE) || 0.75,
   timeout: parseInt(process.env.LLM_TIMEOUT) || 120000, // Timeout de 2 minutos
 };
