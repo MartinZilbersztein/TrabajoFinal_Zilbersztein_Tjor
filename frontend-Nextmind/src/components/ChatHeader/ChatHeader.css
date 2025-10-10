@@ -1,0 +1,11 @@
+.chat-header {
+  padding: 1rem 0;
+  background: white;
+  color: black;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.3rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  flex-shrink: 0;
+}
