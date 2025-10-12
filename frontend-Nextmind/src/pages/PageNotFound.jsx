@@ -11,7 +11,7 @@ export default function PageNotFound() {
 	};
 
 	return (
-		<div className="page-404">
+		<div className="error-page">
 			<ChatHeader />
 			<div className="content">
 				<div className="card">

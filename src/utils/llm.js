@@ -1,12 +1,12 @@
 import { Settings } from "llamaindex";
 import { LLMConfig } from "../config/llm-config.js";
-import * as debug from "../helpers/debug-helper.js";
+import * as debug from "../utils/debug.js";
 
 export const initializeLLM = async () => {
     try {
         const mod = await import("@llamaindex/" + LLMConfig.provider.toLowerCase());
         const llm = new mod[LLMConfig.provider](LLMConfig);
-        
+
         Settings.llm = llm;
         Settings.embedModel = llm;
 

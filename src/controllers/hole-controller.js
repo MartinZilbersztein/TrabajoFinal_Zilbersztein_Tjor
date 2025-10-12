@@ -1,42 +1,19 @@
+import { StatusCodes } from "http-status-codes";
+import * as debug from "../utils/debug.js";
+import getSessionID from "../utils/session.js";
 import {
-  holes,
   createHoleAsync,
   getHoleAsync,
   sendMessageAsync as sendHoleMessageAsync,
   getCategoriesAsync as getHoleCategoriesAsync,
 } from "../services/hole-service.js";
-import getSessionID from "../utils/session.js";
-
-export const sendMessage = async (req, res) => {
-  try {
-    const { message, categoryId } = req.body;
-
-    if (!message) return res.status(400).json({ error: "Falta message" });
-
-    // Crear hole automáticamente si no existe
-    let hole = holes[0]; // asumimos un solo hole
-    if (!hole) {
-      if (!categoryId) return res.status(400).json({ error: "Falta categoryId" });
-      hole = await createHoleAsync(categoryId);
-      console.log("✅ Hole creado automáticamente:", hole);
-    }
-
-    // Enviar mensaje y obtener respuesta
-    const response = await sendHoleMessageAsync(hole.id, message);
-    return res.json(response);
-
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
 
 export const getCategories = async (req, res) => {
   const categories = await getHoleCategoriesAsync();
   return res.json(categories);
-};
+}
 
-export const createHole = async (req, res) =>{
+export const createHole = async (req, res) => {
   const sessionID = await getSessionID(req, res);
   const hole = await createHoleAsync(sessionID);
   res.json(hole);
@@ -44,11 +21,45 @@ export const createHole = async (req, res) =>{
 
 export const getHole = async (req, res) => {
   const sessionID = await getSessionID(req, res);
-  const { holeId } = req.params;
-  const hole = await getHoleAsync(sessionID, holeId);
+  const { holeID } = req.params;
+  const hole = await getHoleAsync(sessionID, holeID);
 
   if (hole)
     return res.json(hole);
   else
-    return res.status(404).json({ error: "Hole no encontrado" });
+    return res.status(StatusCodes.NOT_FOUND).json({ error: "Hole no encontrado" });
 }
+
+export const sendMessage = async (req, res) => {
+  const sessionID = await getSessionID(req, res);
+  const { holeID, message } = req.body;
+  let hole = null;
+
+  if (!message)
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: "Falta message" });
+
+  try {
+    if (holeID) {
+      // Obtener hole
+      hole = await getHoleAsync(sessionID, holeID);
+      if (!hole)
+        return res.status(StatusCodes.NOT_FOUND).json({ error: "Hole no encontrado" });
+    } else {
+      // Crear hole automáticamente si no se provee holeID
+      hole = await createHoleAsync(sessionID);
+      debug.log("✅ Hole creado automáticamente:", hole);
+      holeID = hole.id; // Asegurarse de que holeID esté definido
+    }
+
+    const messages = hole.messages || [];
+
+    // Enviar mensaje y obtener respuesta
+    // console.log(holeID, message, messages);
+    const response = await sendHoleMessageAsync(holeID, message, messages);
+    // res.json({holeID, message, messages});
+    res.json(response);
+  } catch (err) {
+    debug.error(err);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: err.message });
+  }
+};

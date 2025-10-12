@@ -1,46 +1,32 @@
 import { useContext } from "react";
-import { motion } from "motion/react";
+import formatMessage from "../../helpers/format-message-helper";
 import { HoleContext } from "../../contexts/HoleContext";
+import ChatBubble from "../UI/ChatBubble";
 import CategoryButtons from "../UI/CategoryButtons";
 import "./ChatConversation.css";
+import { formatResult } from "../../helpers/fmh";
 
 export default function ChatConversation({ messagesEndRef }) {
   const { messages, loading } = useContext(HoleContext);
-  
+
   return (
   <div className="chat-conversation">
     <div className="chat-body">
-      <motion.div 
-        key={0}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="chat-bubble bot"
-      >
+      <ChatBubble role="assistant">
         {`¡Hola! Empecemos a investigar. Elegí una categoría para empezar:`}
         <CategoryButtons />
-      </motion.div>
+      </ChatBubble>
+
       {messages.map((m, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className={`chat-bubble ${m.role}`}
-        >
-          {m.text}
-        </motion.div>
+        <ChatBubble key={i} role={m.role}>
+          {formatResult(m.content)}
+        </ChatBubble>
       ))}
 
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="chat-bubble bot"
-        >
-          Generando respuesta...
-        </motion.div>
+      {messages.length > 0 && loading && (
+        <ChatBubble role="assistant">
+          <span className="utility-text">Generando respuesta...</span>
+        </ChatBubble>
       )}
 
       <div ref={messagesEndRef} />

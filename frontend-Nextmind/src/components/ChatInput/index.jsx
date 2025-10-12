@@ -1,15 +1,22 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { FiSend } from "react-icons/fi";
 import { HoleContext } from "../../contexts/HoleContext";
 import "./ChatInput.css";
 
 export default function ChatInput() {
-  const { sendMessage, input, setInput, loading, setLoading, categoryId } = useContext(HoleContext);
+  const { sendMessage, loading } = useContext(HoleContext);
+  const [input, setInput] = useState("");
+
+  const sendMessageHandler = () => {
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput("");
+  }
 
    const handleKeyPress = (e) => {
      if (e.key === "Enter" && !e.shiftKey) {
        e.preventDefault();
-       sendMessage();
+       sendMessageHandler();
      }
    };
 
@@ -25,7 +32,7 @@ export default function ChatInput() {
                 disabled={loading} // Solo deshabilitamos mientras llega la respuesta
             />
             <button
-                onClick={sendMessage}
+                onClick={sendMessageHandler}
                 disabled={loading} // Igual aquí
                 className={`chat-send ${loading ? "loading" : ""}`}
             >

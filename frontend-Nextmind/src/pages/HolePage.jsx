@@ -7,72 +7,36 @@ import ChatConversation from "../components/ChatConversation";
 import ChatInput from "../components/ChatInput";
 import PageNotFound from "./PageNotFound";
 import "./HolePage.css";
-import { set } from "zod";
 
 export default function HolePage() {
-  const { holeId } = useParams();
+  const { holeID } = useParams();
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
   const [notExists, setNotExists] = useState(false);
-
-
-  // Hole managment
-
-  const createHole = async () => {
-    try {
-      const hole = await holeService.createHole();
-      setHoleId(hole.id);
-    } catch (err) {
-      console.error("Error al crear el chat:", err);
-    }
-  };
-
-  const getHole = async (holeId) => {
-    let hole = null;
-    try {
-      hole = await holeService.getHole(holeId);
-      console.log(hole);
-    } catch (err) {
-      console.error("Error al obtener el chat:", err);
-    }
-    return hole;
-  };
-
-  const setHoleId = (id) => {
-    window.history.replaceState(null, null, `/#/hole/${id}`);
-  };
+  const messagesEndRef = useRef(null);
 
 
   // Crear/obtener chat automáticamente
 
   useEffect(() => {
-    let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        if (holeId && holeId === "new") {
+        if (holeID && holeID === "new") {
           await createHole();
-        } else if (holeId) {
-          const hole = await getHole(holeId);
-          if (cancelled) return;
-          if (hole) {
-            setMessages(hole.messages || []);
-          } else {
-            setNotExists(true);
-          }
+        } else if (holeID) {
+          const hole = await getHole(holeID);
+          if (hole) setMessages(hole.messages || []);
+          else      setNotExists(true);
         } else {
-          setHoleId("new");
+          setHoleID("new");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [holeId]);
+  }, [holeID]);
+
 
   // Autoscroll
 
@@ -80,57 +44,77 @@ export default function HolePage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+
+  // Hole managment
+
+  const createHole = async () => {
+    try {
+      const hole = await holeService.createHole();
+      setHoleID(hole.id);
+    } catch (err) {
+      console.error("Error al crear el chat:", err);
+    }
+  };
+
+  const getHole = async (holeID) => {
+    let hole = null;
+    try {
+      hole = await holeService.getHole(holeID);
+    } catch (err) {
+      console.error("Error al obtener el chat:", err);
+    }
+    return hole;
+  };
+
+  const setHoleID = (newHoleID) => {
+    if (newHoleID !== 'new') {
+      window.history.replaceState(null, null, `/#/hole/${newHoleID}`);
+    }
+  };
+
+  const sendMessage = async (message) => {
+    const userMessage = { role: "user", content: message };
+    setMessages((prev) => [...prev, userMessage]);
+    setLoading(true);
+
+    try {
+      const data = await holeService.sendMessage(holeID, message);
+      const botMessage = { role: "assistant", content: data.message };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error(error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "❌ Error al obtener respuesta." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // Render
+
   if (notExists) {
     return <PageNotFound />;
   }
 
-
-  const sendMessage = async () => {
-        if (!input.trim()) return;
-  
-        const userMessage = { role: "user", text: input };
-        setMessages((prev) => [...prev, userMessage]);
-        setInput("");
-        setLoading(true);
-  
-        try {
-          const response = await fetch(`http://localhost:3000/holes/send`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: userMessage.text, categoryId: categoryId ?? 1 }),
-          });
-  
-       if (!response.ok) throw new Error("Error en la respuesta del servidor");
-  
-       const data = await response.json();
-       const botMessage = { role: "bot", text: data.message };
-       setMessages((prev) => [...prev, botMessage]);
-     } catch (error) {
-       console.error(error);
-       setMessages((prev) => [
-         ...prev,
-         { role: "bot", text: "❌ Error al obtener respuesta." },
-       ]);
-     } finally {
-       setLoading(false);
-     }
-   };
-
   return (
-    <div className="chat-app">
+    <div className="hole-page">
       <HoleContext.Provider value={{
-        holeId,
-        setHoleId,
+        holeID,
+        setHoleID,
         messages,
         sendMessage,
-        input,
-        setInput,
         loading,
         setLoading
       }}>
-        <ChatHeader />
-        <ChatConversation messagesEndRef={messagesEndRef} />
-        <ChatInput />
+        {/* <Sidebar /> */}
+        <div className="chat-container">
+          <ChatHeader />
+          <ChatConversation messagesEndRef={messagesEndRef} />
+          <ChatInput />
+        </div>
       </HoleContext.Provider>
     </div>
   );

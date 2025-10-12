@@ -6,8 +6,8 @@ function App() {
     return (
         <HashRouter>
             <Routes>
-                <Route path="/" element={<Navigate to={`/new`} replace />} />
-                <Route path="/hole/:holeId" element={<HolePage />} />
+                <Route path="/" element={<Navigate to={`/hole/new`} replace />} />
+                <Route path="/hole/:holeID" element={<HolePage />} />
                 <Route path="*" element={<PageNotFound />} />
             </Routes>
         </HashRouter>

@@ -9,3 +9,17 @@
   z-index: 10;
   flex-shrink: 0;
 }
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.logo img {
+    width: 25px;
+    height: 25px;
+}
+.logo p {
+    margin: 0;
+}
