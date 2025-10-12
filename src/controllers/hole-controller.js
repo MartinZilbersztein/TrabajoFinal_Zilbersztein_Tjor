@@ -7,6 +7,7 @@ import {
   sendMessageAsync as sendHoleMessageAsync,
   getCategoriesAsync as getHoleCategoriesAsync,
 } from "../services/hole-service.js";
+import { validate as uuidValidate } from "uuid";
 
 export const getCategories = async (req, res) => {
   const categories = await getHoleCategoriesAsync();
@@ -40,12 +41,13 @@ export const sendMessage = async (req, res) => {
 
   try {
     if (holeID) {
-      // Obtener hole
+      if (!uuidValidate(holeID))
+        return res.status(StatusCodes.BAD_REQUEST).json({ error: "HoleID no válido" });
+
       hole = await getHoleAsync(sessionID, holeID);
       if (!hole)
         return res.status(StatusCodes.NOT_FOUND).json({ error: "Hole no encontrado" });
     } else {
-      // Crear hole automáticamente si no se provee holeID
       hole = await createHoleAsync(sessionID);
       debug.log("✅ Hole creado automáticamente:", hole);
       holeID = hole.id; // Asegurarse de que holeID esté definido

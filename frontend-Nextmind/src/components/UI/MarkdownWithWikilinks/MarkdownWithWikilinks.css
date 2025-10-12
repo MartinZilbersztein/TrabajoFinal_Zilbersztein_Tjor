@@ -1,0 +1,14 @@
+.markdown ul { list-style-position: inside; }
+.markdown .wikilink {
+  color: #0b66ff;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.markdown .wikilink:hover { background: rgba(11,102,255,0.06); text-decoration: underline; }
+.markdown .wikilink.missing { color: #a00; background: rgba(255,0,0,0.04); }
+.markdown .wikilink.external { color: #0a9; }
+.markdown .wikilink .wikilink-icon { font-size: 0.9em; opacity: .9; }

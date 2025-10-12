@@ -1,3 +1,4 @@
+import * as debug from "../utils/debug.js";
 import * as sessionService from "../services/session-service.js";
 
 // Obtiene o crea un sessionID, setea la cookie y devuelve el ID
@@ -15,9 +16,9 @@ export default async function getSessionID(req, res) {
         sameSite: "lax",
         maxAge: 31536000000, // ~1 año
       });
-    } catch (e) {
+    } catch (err) {
       sessionID = null;
-      console.warn("getSessionID falló, creando hole sin persistencia de sesión:", e?.message || e);
+      debug.error("getSessionID falló, sin persistencia de sesión:", err?.message || err);
     }
   }
 

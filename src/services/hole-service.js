@@ -51,19 +51,19 @@ export async function sendMessageAsync(holeID, message, messages) {
 
     // Formateamos la respuesta
     debug.log("✅ Respuesta generada:", assistantMessage);
-
-    debug.log("🔹 Persistiendo conversación en la base...");
-    try {
-      await repo.updateMessagesAsync(holeID, messages);
-      debug.log("✅ Conversación persistida en la base");
-    } catch (err) {
-      debug.error("Error al persistir la conversación en la base:", err?.message || err);
-      throw err;
-    }
   } catch (err) {
     debug.error("❌ Error generando respuesta con LlamaIndex agent:", err);
     // const assistantMessage = "❌ Error al generar respuesta";
     messages.push({ role: "assistant", content: "❌ Error al generar respuesta" });
+    throw err;
+  }
+
+  debug.log("🔹 Persistiendo conversación en la base...");
+  try {
+    await repo.updateMessagesAsync(holeID, messages);
+    debug.log("✅ Conversación persistida en la base");
+  } catch (err) {
+    debug.error("Error al persistir la conversación en la base:", err?.message || err);
     throw err;
   }
 

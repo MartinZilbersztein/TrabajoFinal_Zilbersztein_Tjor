@@ -1,13 +1,19 @@
 import { useContext } from "react";
-import formatMessage from "../../helpers/format-message-helper";
 import { HoleContext } from "../../contexts/HoleContext";
 import ChatBubble from "../UI/ChatBubble";
 import CategoryButtons from "../UI/CategoryButtons";
+import MarkdownWithWikilinks from "../UI/MarkdownWithWikilinks/MarkdownWithWikilinks";
 import "./ChatConversation.css";
-import { formatResult } from "../../helpers/fmh";
 
 export default function ChatConversation({ messagesEndRef }) {
   const { messages, loading } = useContext(HoleContext);
+
+  function resolveLink(ref) {
+    const existing = new Set(["Home", "Project/Plan"]);
+    const to = /^https?:\/\//.test(ref) ? ref : `/notes/${encodeURIComponent(ref)}`;
+    const status = existing.has(ref) ? "ok" : "missing";
+    return {to, status};
+  }
 
   return (
   <div className="chat-conversation">
@@ -19,7 +25,8 @@ export default function ChatConversation({ messagesEndRef }) {
 
       {messages.map((m, i) => (
         <ChatBubble key={i} role={m.role}>
-          {formatResult(m.content)}
+          {/* formatResult(m.content) */}
+          <MarkdownWithWikilinks source={m.content} resolveLink={resolveLink} onNavigate={(to)=>console.log("nav",to)} />
         </ChatBubble>
       ))}
 
