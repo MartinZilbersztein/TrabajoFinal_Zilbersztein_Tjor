@@ -27,50 +27,20 @@ function ThinkDropdown({ children }) {
   );
 }
 
-// Simple plugin: convert [[ref|label]] and [[ref]] to md link nodes
-function remarkWikilinkPlugin() {
-  return (tree) => {
-    const visit = (node, parent) => {
-      if (!node || !node.children) return;
-      for (let i = 0; i < node.children.length; i++) {
-        const child = node.children[i];
-
-        if (child.type === "text") {
-          const text = child.value;
-          const parts = [];
-          const regex = /$$\[([^$$\|]+)(?:\|([^\]]+))?\]\]/g;
-          let lastIndex = 0;
-          let m;
-          let any = false;
-
-          while ((m = regex.exec(text)) !== null) {
-            any = true;
-            if (m.index > lastIndex) parts.push({type: "text", value: text.slice(lastIndex, m.index)});
-            const ref = m[1].trim();
-            const label = (m[2] || ref).trim();
-            // create a link node: use a custom url scheme "wikilink:" so we can detect it later
-            parts.push({
-              type: "link",
-              url: `wikilink:${ref}`,
-              title: null,
-              children: [{type: "text", value: label}],
-            });
-            lastIndex = regex.lastIndex;
-          }
-
-          if (any) {
-            if (lastIndex < text.length) parts.push({type: "text", value: text.slice(lastIndex)});
-            // replace the single text node with the parts
-            node.children.splice(i, 1, ...parts);
-            i += parts.length - 1;
-          }
-        } else {
-          visit(child, node);
-        }
-      }
-    };
-    visit(tree, null);
-  };
+// Split the markdown source into think content and answer content
+function splitThinkSections(source) {
+  if (!source || typeof source !== 'string') return { thinkSource: '', answerSource: source || '' };
+  const thinkRegex = /<\s*Think\b[^>]*>([\s\S]*?)<\s*\/\s*Think\s*>/gi;
+  const thinkParts = [];
+  let answer = source;
+  let match;
+  while ((match = thinkRegex.exec(source)) !== null) {
+    const inner = match[1] || '';
+    thinkParts.push(inner.trim());
+  }
+  answer = answer.replace(thinkRegex, '').trim();
+  const think = thinkParts.join("\n\n");
+  return { thinkSource: think, answerSource: answer };
 }
 
 // WikiLink React component
@@ -119,30 +89,40 @@ function WikiLink({href, children, resolveLink, onNavigate, className, ...rest})
 
 // Main component
 export default function MarkdownWithWikilinks({ source }) {
-  console.log(source);
+  const { thinkSource, answerSource } = splitThinkSections(source);
   return (
-    <ReactMarkdown
-      children={source}
-      remarkPlugins={[[remarkWikilinkPlugin]]}
-      components={{
-        think: ({ node, ...props }) => (
-          <ThinkDropdown>
-            <div className="think-content-inner">
-              {props.children}
-            </div>
-          </ThinkDropdown>
-        ),
-        tools: ({ node }) => (
-          <></>
-        ),
-      }}
-      rehypePlugins={[
-        [rehypeRaw, { passThrough: ['think'] }],
-        [remarkWikiLink, {
-          pageResolver: (pageName) => pageName,
-          hrefTemplate: (href) => `?input=${encodeURIComponent(href)}`
-        }]
-      ]}
-    />
+    <>
+      {thinkSource && (
+        <ThinkDropdown>
+          <div className="think-content-inner">
+            <ReactMarkdown
+              children={thinkSource}
+              remarkPlugins={[
+                [remarkWikiLink, {
+                  pageResolver: (pageName) => [pageName],
+                  hrefTemplate: (href) => `?input=${encodeURIComponent(href)}`
+                }]
+              ]}
+              rehypePlugins={[ [rehypeRaw, { passThrough: [] }] ]}
+            />
+          </div>
+        </ThinkDropdown>
+      )}
+      {answerSource && (
+        <ReactMarkdown
+          children={answerSource}
+          remarkPlugins={[
+            [remarkWikiLink, {
+              pageResolver: (pageName) => [pageName],
+              hrefTemplate: (href) => `?input=${encodeURIComponent(href)}`
+            }]
+          ]}
+          components={{
+            tools: ({ node }) => (<></>),
+          }}
+          rehypePlugins={[ [rehypeRaw, { passThrough: [] }] ]}
+        />
+      )}
+    </>
   );
 }
