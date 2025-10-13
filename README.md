@@ -15,6 +15,7 @@ RabbIA es una app que combina un backend en Node/Express con un frontend en Reac
 ├─ package-lock.json
 ├─ src/                   # Código del backend (p. ej. app.js)
 ├─ frontend-Nextmind/     # Frontend (Vite + React)
+│  ├─ .env.example
 │  ├─ package.json
 │  └─ src/
 └─ README.md
@@ -47,15 +48,12 @@ RabbIA es una app que combina un backend en Node/Express con un frontend en Reac
   ```
   Nota: Si ya ejecutaste `npm install` en el backend y el proveedor está declarado en package.json, no necesitas hacer nada adicional.
 4. Configuración
-  - Copia el archivo de ejemplo y completa las variables:
+  - Copia los archivos de ejemplo y completa las variables en ambas carpetas:
     ```bash
     cp .env.example .env
+    cp frontend-Nextmind/.env.example frontend-Nextmind/.env
     ```
-  - Revisa y ajusta las variables según tu entorno. Consultá `.env.example` para ver todas las claves soportadas. Usualmente incluyen:
-    - Variables de servidor: `PORT`, `CORS_ORIGIN`
-    - Conexión a base de datos: `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `PGPORT` o `DATABASE_URL`
-    - LLM/Ollama: `OLLAMA_BASE_URL`, `LLM_MODEL` (p. ej., `llama3`)
-  - Si el frontend requiere variables (por ejemplo, URL del backend), definilas según el mecanismo de Vite (variables `VITE_...`) en un `.env` dentro de `frontend-Nextmind` si aplica.
+  - Revisa y ajusta las variables según tu entorno. Consultá ambos `.env.example` para ver todas las claves soportadas. Usualmente incluyen:
 
 ## Ejecución
 
