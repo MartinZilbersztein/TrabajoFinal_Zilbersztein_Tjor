@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { HoleContext } from "../contexts/HoleContext";
 import * as holeService from "../services/hole-service";
 import ChatHeader from "../components/ChatHeader";
@@ -10,11 +10,14 @@ import "./HolePage.css";
 
 export default function HolePage() {
   const { holeID } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [notExists, setNotExists] = useState(false);
   const messagesEndRef = useRef(null);
+  const creatingPromiseRef = useRef(null);
+  const resolvedHoleIdRef = useRef(null);
 
 
   // Crear/obtener chat automáticamente
@@ -24,7 +27,7 @@ export default function HolePage() {
       setLoading(true);
       try {
         if (holeID && holeID === "new") {
-          await createHole();
+          await ensureHoleId();
         } else if (holeID) {
           const hole = await getHole(holeID);
           if (hole) setMessages(hole.messages || []);
@@ -58,20 +61,34 @@ export default function HolePage() {
   // Hole managment
 
   const createHole = async () => {
-    try {
-      // Only create a new hole if we don't have one already
-      if (holeID === 'new' || !holeID) {
-        const hole = await holeService.createHole();
-        if (hole && hole.id) {
-          setHoleID(hole.id);
-          return hole.id;
-        }
-      }
+    const hole = await holeService.createHole();
+    if (hole && hole.id) return hole.id;
+    return null;
+  };
+
+  const ensureHoleId = async () => {
+    // If already resolved during this session, return it
+    if (resolvedHoleIdRef.current) return resolvedHoleIdRef.current;
+    // If URL carries a concrete id, cache and return it
+    if (holeID && holeID !== 'new') {
+      resolvedHoleIdRef.current = holeID;
       return holeID;
-    } catch (err) {
-      console.error("Error al crear el chat:", err);
-      return null;
     }
+    // Single-flight: if creating is in progress, await the same promise
+    if (creatingPromiseRef.current) return creatingPromiseRef.current;
+    // Start creation
+    creatingPromiseRef.current = (async () => {
+      const id = await createHole();
+      if (id) {
+        resolvedHoleIdRef.current = id;
+        setHoleID(id);
+        creatingPromiseRef.current = null;
+        return id;
+      }
+      creatingPromiseRef.current = null;
+      return null;
+    })();
+    return creatingPromiseRef.current;
   };
 
   const getHole = async (holeID) => {
@@ -87,7 +104,7 @@ export default function HolePage() {
   const setHoleID = (newHoleID) => {
     // Only update the URL if we have a valid holeID and it's different from the current one
     if (newHoleID && newHoleID !== 'new' && newHoleID !== holeID) {
-      window.history.pushState(null, null, `/hole/${newHoleID}`);
+      navigate(`/hole/${newHoleID}`, { replace: true });
     }
   };
 
@@ -100,8 +117,8 @@ export default function HolePage() {
     setLoading(true);
 
     try {
-      // Make sure we have a valid holeID before sending the message
-      const currentHoleID = holeID === 'new' ? await createHole() : holeID;
+      // Always ensure we have a concrete hole id (single-flight creation)
+      const currentHoleID = await ensureHoleId();
       
       if (!currentHoleID) {
         throw new Error("No se pudo crear o obtener el chat");

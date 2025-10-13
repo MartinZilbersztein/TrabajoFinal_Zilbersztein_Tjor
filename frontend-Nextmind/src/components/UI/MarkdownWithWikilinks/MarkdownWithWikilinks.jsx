@@ -103,6 +103,19 @@ export default function MarkdownWithWikilinks({ source }) {
                   hrefTemplate: (href) => `?input=${encodeURIComponent(href)}`
                 }]
               ]}
+              components={{
+                a: ({href, children, ...rest}) => {
+                  const isExternal = typeof href === 'string' && /^https?:\/\//.test(href);
+                  if (!isExternal) {
+                    return <span {...rest}>{children}</span>;
+                  }
+                  return (
+                    <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+                      {children}
+                    </a>
+                  );
+                }
+              }}
               rehypePlugins={[ [rehypeRaw, { passThrough: [] }] ]}
             />
           </div>
@@ -119,6 +132,17 @@ export default function MarkdownWithWikilinks({ source }) {
           ]}
           components={{
             tools: ({ node }) => (<></>),
+            a: ({href, children, ...rest}) => {
+              const isExternal = typeof href === 'string' && /^https?:\/\//.test(href);
+              if (!isExternal) {
+                return <span {...rest}>{children}</span>;
+              }
+              return (
+                <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+                  {children}
+                </a>
+              );
+            }
           }}
           rehypePlugins={[ [rehypeRaw, { passThrough: [] }] ]}
         />
