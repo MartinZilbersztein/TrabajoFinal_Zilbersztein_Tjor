@@ -33,20 +33,17 @@ export async function getHoleAsync(sessionID, holeID) {
   return entity;
 }
 
-export async function sendMessageAsync(holeID, message, messages) {
+export async function sendMessageAsync(holeID, input, messages) {
   let assistantMessage;
 
-  debug.log("🔹 Generando respuesta con LlamaIndex agent para:", message);
+  debug.log("🔹 Generando respuesta con LlamaIndex agent para:", input);
   try {
     // Usamos el agent para generar la respuesta
-    const agentResponse = await holeAgent.run(message, { messages });
+    const agentResponse = await holeAgent.run(input, { messages });
     assistantMessage = agentResponse?.data.result || agentResponse?.data.message.content;
     debug.log(agentResponse.data.message);
 
-    // Agregamos el mensaje del usuario al historial
-    messages.push({ role: "user", content: message });
-
-    // Guardamos la respuesta del bot en el historial
+    messages.push({ role: "user", content: input });
     messages.push({ role: "assistant", content: assistantMessage });
 
     // Formateamos la respuesta

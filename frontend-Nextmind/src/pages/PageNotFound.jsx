@@ -7,7 +7,7 @@ export default function PageNotFound() {
 	};
 
 	const goNewHole = () => {
-		window.location.href = "/#/hole/new"; // asumiendo que creás uno al entrar
+		window.location.href = "/hole/new"; // asumiendo que creás uno al entrar
 	};
 
 	return (

@@ -1,5 +1,31 @@
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkWikiLink from "remark-wiki-link";
 import "./MarkdownWithWikilinks.css";
+
+// Component for <think> tags with dropdown
+function ThinkDropdown({ children }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="think-container">
+      <button 
+        className="think-toggle" 
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <span className="think-toggle-icon">▶</span>
+        <span className="think-toggle-text">Proceso de pensamiento</span>
+      </button>
+      {isOpen && (
+        <div className="think-content">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Simple plugin: convert [[ref|label]] and [[ref]] to md link nodes
 function remarkWikilinkPlugin() {
@@ -92,29 +118,31 @@ function WikiLink({href, children, resolveLink, onNavigate, className, ...rest})
 }
 
 // Main component
-export default function MarkdownWithWikilinks({
-  source,
-  resolveLink = (ref) => ({ to: `/notes/${encodeURIComponent(ref)}`, status: "ok" }),
-  onNavigate,
-  className,
-}) {
+export default function MarkdownWithWikilinks({ source }) {
+  console.log(source);
   return (
     <ReactMarkdown
       children={source}
       remarkPlugins={[[remarkWikilinkPlugin]]}
       components={{
-        a: ({node, href, children, ...props}) => (
-          <WikiLink
-            href={href}
-            resolveLink={resolveLink}
-            onNavigate={onNavigate}
-            className={className}
-            {...props}
-          >
-            {children}
-          </WikiLink>
+        think: ({ node, ...props }) => (
+          <ThinkDropdown>
+            <div className="think-content-inner">
+              {props.children}
+            </div>
+          </ThinkDropdown>
+        ),
+        tools: ({ node }) => (
+          <></>
         ),
       }}
+      rehypePlugins={[
+        [rehypeRaw, { passThrough: ['think'] }],
+        [remarkWikiLink, {
+          pageResolver: (pageName) => pageName,
+          hrefTemplate: (href) => `?input=${encodeURIComponent(href)}`
+        }]
+      ]}
     />
   );
 }

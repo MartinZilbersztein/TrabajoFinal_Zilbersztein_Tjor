@@ -33,12 +33,12 @@ export async function getHole(holeID) {
   }
 }
 
-export async function sendMessage(holeID, message) {
+export async function sendMessage(holeID, input) {
   const response = await fetch(`${API_ENDPOINT}/holes/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ holeID, message }),
+    body: JSON.stringify({ holeID, input }),
   });
 
   if (!response.ok) {

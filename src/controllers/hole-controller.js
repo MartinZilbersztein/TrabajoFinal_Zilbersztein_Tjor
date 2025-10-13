@@ -33,10 +33,10 @@ export const getHole = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   const sessionID = await getSessionID(req, res);
-  const { holeID, message } = req.body;
+  const { holeID, input } = req.body;
   let hole = null;
 
-  if (!message)
+  if (!input)
     return res.status(StatusCodes.BAD_REQUEST).json({ error: "Falta message" });
 
   try {
@@ -57,7 +57,7 @@ export const sendMessage = async (req, res) => {
 
     // Enviar mensaje y obtener respuesta
     // console.log(holeID, message, messages);
-    const response = await sendHoleMessageAsync(holeID, message, messages);
+    const response = await sendHoleMessageAsync(holeID, input, messages);
     // res.json({holeID, message, messages});
     res.json(response);
   } catch (err) {

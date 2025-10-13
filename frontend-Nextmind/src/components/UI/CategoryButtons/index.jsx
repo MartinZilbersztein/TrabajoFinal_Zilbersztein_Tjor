@@ -30,7 +30,7 @@ export default function CategoryButtons() {
                 return (
                     <button
                         key={c.id}
-                        onClick={() => sendMessage(c.name)}
+                        onClick={() => sendMessage("Dime algo relacionado con " + c.name)}
                         disabled={categoryAlreadySet}
                         style={buttonStyle}
                     >
