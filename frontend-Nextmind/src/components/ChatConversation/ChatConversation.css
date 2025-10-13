@@ -1,0 +1,19 @@
+/* ---- Ventana principal ---- */
+.chat-conversation {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* ocupa todo el ancho */
+  overflow: hidden;
+}
+
+.chat-body {
+  flex: 1;
+  background: white;
+  margin: 0; /* ocupa todo el espacio posible */
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  gap: 0.6rem;
+}

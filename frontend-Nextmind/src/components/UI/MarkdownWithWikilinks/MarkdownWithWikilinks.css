@@ -1,0 +1,72 @@
+.chat-bubble .wikilink {
+  color: #0b66ff;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.chat-bubble .wikilink:hover { background: rgba(11,102,255,0.06); text-decoration: underline; }
+.chat-bubble .wikilink.missing { color: #a00; background: rgba(255,0,0,0.04); }
+.chat-bubble .wikilink.external { color: #0a9; }
+.chat-bubble .wikilink .wikilink-icon { font-size: 0.9em; opacity: .9; }
+
+/* Think dropdown styles */
+.think-container {
+  margin: 0;
+  border: 1px solid #e2e8f0;
+  /* border-radius: 6px; */
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.think-toggle {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: #f8fafc;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.think-toggle:hover {
+  background-color: #f1f5f9;
+}
+
+.think-toggle-icon {
+  font-size: 0.8em;
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.think-toggle[aria-expanded="true"] .think-toggle-icon {
+  transform: rotate(90deg);
+}
+
+.think-content {
+  padding: 0.5rem 1rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.think-content-inner {
+  padding: 0.5rem 0;
+  color: #4a5568;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.think-content-inner p:first-child {
+  margin-top: 0;
+}
+
+.think-content-inner p:last-child {
+  margin-bottom: 0;
+}
